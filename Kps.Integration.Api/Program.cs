@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using Serilog;
 using Serilog.Events;
 using Kps.Integration.Api.Data;
+using Kps.Integration.Api.HostedServices;
 
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
@@ -56,7 +57,7 @@ try
         });
 
     builder.Services.UseAuth();
-
+    //builder.Services.AddHostedService<OrderKiotVietServices>();
     var app = builder.Build();
 
     // Configure the HTTP request pipeline.

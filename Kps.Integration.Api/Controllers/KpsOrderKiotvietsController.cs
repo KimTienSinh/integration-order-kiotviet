@@ -35,29 +35,6 @@ namespace Kps.Integration.Api.Controllers
         }
 
         
-
-        private async Task<ActionResult<KpsOrderKiotviet>> GetKpsOrderKiotviet(uint id)
-        {
-            var kpsOrderKiotviet = await _context.KpsOrderKiotviets.FindAsync(id);
-
-            if (kpsOrderKiotviet == null)
-            {
-                return NotFound();
-            }
-
-            return kpsOrderKiotviet;
-        }
-
-
-        [HttpPost]
-        private async Task<ActionResult<KpsOrderKiotviet>> PostKpsOrderKiotviet(KpsOrderKiotviet kpsOrderKiotviet)
-        {
-            _context.KpsOrderKiotviets.Add(kpsOrderKiotviet);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetKpsOrderKiotviet", new { id = kpsOrderKiotviet.IdKps }, kpsOrderKiotviet);
-        }
-
         private bool KpsOrderKiotvietExists(uint id)
         {
             return _context.KpsOrderKiotviets.Any(e => e.IdKps == id);
@@ -143,75 +120,28 @@ namespace Kps.Integration.Api.Controllers
             }
         }
 
-        [HttpGet("GetFirstOrderKiotViet")]
-        
-        public async Task<string> GetFirstOrderKiotViet()
-        {
-            try
-            {
-                using var client = new HttpClient();
-                var token = callTokenAsync();
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", await token);
-                var configManager = new ConfigurationManager();
-                var endPoint = configManager.GetConfigValue<string>("KiotViet:OrderKiotViet");
-                client.DefaultRequestHeaders.Add("Retailer", "kpsmall");
-                var response = await client.GetStringAsync(endPoint);
-
-
-                var content = JsonConvert.DeserializeObject<JToken>(response);
-
-                DateTime dateTime = DateTime.Now;
-
-                string timeNowString = dateTime.ToString("yyyy-MM-ddTHH:mm:ss.fff");
-
-
-
-                var orderFirst = content.SelectTokens("data[*]")
-                    .Select(order => new KpsOrderKiotviet
-                    {
-                        Id = (Int64)order["id"],
-                        Code = (string)order["code"],
-                        SoldByName = (string)order["soldByName"],
-                        CustomerCode = (string)order["customerCode"],
-                        CustomerName = (string)order["customerName"],
-                        Total = (double)order["total"],
-                        TotalPayment = (double)order["totalPayment"],
-                        CreatedDate = (DateTime)order["createdDate"],
-                        CreatedAt = DateTime.Parse(timeNowString)
-
-                    }).ToList().FirstOrDefault();
-
-                return JsonConvert.SerializeObject(orderFirst);
-
-            }
-            catch (Exception ex)
-            {
-                throw;
-
-            }
-        }
-
 
         [HttpPost("SyncListOrderPost")]
+        [ApiExplorerSettings(IgnoreApi = false)]
         public async Task<ActionResult> SyncListOrderPost([FromBody] List<KpsOrderKiotviet> listOrder)
         {
             listOrder = await GetListOrderKiotviet();
             _context.KpsOrderKiotviets.AddRange(listOrder);
             _context.SaveChanges();
 
-            return CreatedAtAction("GetOrders", new { }, listOrder);
+            return CreatedAtAction("SyncListOrderPost", new { }, listOrder);
         }
 
-
-        [HttpGet("GetKpsIdOrderMaxDB")]
-        public ActionResult<int> GetKpsIdOrderMaxDB()
+/*
+        [HttpGet("SyncListOrderHosted")]
+        public async Task<ActionResult> SyncListOrderHosted()
         {
-
+          //  var syncOrderHosted = await SyncListOrderPost();
             var orderIdMax = _context.KpsOrderKiotviets
                 .Max(o => o.Id);
 
             return Ok(orderIdMax);
 
-        }
+        }*/
     }
 }
