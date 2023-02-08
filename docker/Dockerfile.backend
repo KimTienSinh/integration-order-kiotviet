@@ -1,0 +1,25 @@
+# https://hub.docker.com/_/microsoft-dotnet
+FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
+WORKDIR /source
+
+RUN apt-get update -yq \
+    && apt-get install curl -yq
+
+# copy csproj and restore as distinct layers
+COPY . .
+
+RUN dotnet restore Kps.Integration.Api/Kps.Integration.Api.csproj
+RUN dotnet publish Kps.Integration.Api/Kps.Integration.Api.csproj -c release -o /app --no-restore
+# RUN ls out
+
+# final stage/image
+FROM mcr.microsoft.com/dotnet/aspnet:6.0
+WORKDIR /app
+
+RUN apt-get update -yq \
+    && apt-get install curl -yq
+
+COPY --from=build /app ./
+
+ENTRYPOINT ["dotnet", "Kps.Integration.Api.dll"]
+EXPOSE 8080

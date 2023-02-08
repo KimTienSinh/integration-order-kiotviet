@@ -1,0 +1,388 @@
+﻿@page
+@model ReportModel
+@{
+    ViewData["Title"] = "Order synced report";
+}
+
+@section HeaderStyles
+{
+    <link href="https://unpkg.com/bootstrap-datepicker@1.9.0/dist/css/bootstrap-datepicker3.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="~/lib/bootstrap-datepicker3/dist/bootstrap-datepicker3.min.css" />
+
+    <style type="text/css">
+        html1 { background-color: transparent; }
+        body1 { background-color: #f0f2f5; color: rgba(0,0,0,.85); font-family: "Segoe UI","Roboto","Oxygen","Ubuntu","Cantarell","Fira Sans","Droid Sans","Helvetica Neue",sans-serif; font-size: 14px; margin: 16px; }
+        .container { min-width: 900px; }
+        .footer { width: calc(100% - 32px); }
+        .modal-loading { position: fixed; top: 0; bottom: 0; left: 0; right: 0; background-color: rgba(0,0,0,.2); }
+        .modal-loading .spinner-wrapper { position: fixed; top: calc(50% - 16px); left: calc(50% - 16px); }
+        .form-control, .btn { border-radius: 2px; box-shadow: none !important; font-size: 14px !important; }
+        .btn { letter-spacing: 0.3px; }
+        .page-content { background-color: #fff; font-size: 14px; padding: 24px; width: 100%; }
+        .nav-bar { display: block; font-size: 0; }
+        .nav-bar div { display: inline-block; margin-right: 6px; vertical-align: bottom; }
+        .nav-bar div label { font-size: 14px; font-weight: 700; line-height: 22px; margin-bottom: 4px; }
+        .result-list { margin-top: 22px; }
+        .result-list table { border-collapse: separate; border-radius: 2px 2px 0 0; border-spacing: 0; text-align: left; width: 100%; }
+        .result-list table th, .result-list table td { border-bottom: 1px solid #f0f0f0; border-right: 1px solid #f0f0f0; line-height: 18px; padding: 10px 8px }
+        .result-list table th { background-color: #fafafa; border-top: 1px solid #f0f0f0; font-weight: 500; }
+        .result-list table th:first-child, .result-list table td:first-child { border-left: 1px solid #f0f0f0; }
+        .result-list .btn-resync { background-color: #6610f2; border-color: #6610f2; color: #fff; }
+        .result-list .order-status { display: inline-block; background-color: #6c757d; border-radius: 3px; color: #fff; font-size: 13px; letter-spacing: .5px; padding: 4px 8px; }
+        .result-list .order-status.succeed { background-color: #0a58ca; }
+        .result-list .order-status.failed { background-color: #dc3545; }
+        .result-list .order-status.failed-by-magento-api { background-color: #fd7e14; }
+        .result-list .order-status.invalid-data-from-magento-api { background-color: #20c997; }
+        .result-list .order-status.has-synced-before { background-color: #6f42c1; }
+        .paging-nav { display: block; font-size: 0; margin-top: 22px; }
+        .paging-nav .block { display: inline-block; font-size: 14px; line-height: 34px; margin-right: 8px; }
+        .paging-nav .page-list ul { display: block; font-size: 0; line-height: 0; margin: 0; padding: 0; }
+        .paging-nav .page-list ul li { display: inline-block; background-color: #fff; border: 1px solid #d9d9d9; border-radius: 2px; font-size: 14px; line-height: 32px; margin-right: 8px; padding: 0 12px; }
+        .paging-nav .page-list ul li:hover, .paging-nav .page-list ul li:focus, .paging-nav .page-list .active { cursor: pointer; border-color: #1890ff; color: #1890ff; font-weight: 500; }
+        .paging-nav .page-list ul li a { color: rgba(0,0,0,.85); }
+        .paging-nav .page-list .active:hover, .paging-nav .page-list .active:focus { cursor: default; }
+        .paging-nav .page-list .disabled, .paging-nav .page-list .disabled:hover, .paging-nav .page-list .disabled:focus { cursor: not-allowed; border: 1px solid #d9d9d9; color: rgba(0,0,0,.25); }
+    </style>
+}
+
+@section HeaderScripts
+{
+    <script src="~/lib/bootstrap-datepicker3/dist/bootstrap-datepicker.min.js"></script>
+    <script src="~/lib/jquery-dynatable/dist/jquery.dynatable.min.js"></script>
+    <script src="~/lib/pagination/dist/pagination.min.js"></script>
+}
+
+<div class="page-content">
+    <div class="nav-bar">
+        <div class="from-date">
+            <label>From date</label>
+            <input type="text" class="form-control" />
+        </div>
+        <div class="to-date">
+            <label>To date</label>
+            <input type="text" class="form-control" />
+        </div>
+        <div class="status">
+            <label>Status</label>
+            <select class="form-control form-select">
+                <option value="">ALL</option>
+                <option value="INIT">Init</option>
+                <option value="SUCCEED">Succeed</option>
+                <option value="FAILED">Failed</option>
+                <option value="FAILED_BY_MAGENTO_API">Failed by Magento api</option>
+                <option value="INVALID_DATA_FROM_MAGENTO_API">Invalid data from Magento api</option>
+                <option value="HAS_SYNCED_BEFORE">Has synced before</option>
+            </select>
+        </div>
+        <div>
+            <input type="submit" class="btn btn-primary" value="Search" onclick="onClickSearch(true)" />
+        </div>
+    </div>
+    <div class="result">
+        <div class="result-list">
+            <table>
+                <thead>
+                    <tr>
+                        <th width="70">#</th>
+                        <th width="150">Order id</th>
+                        <th width="150">Retry count</th>
+                        <th>Status</th>
+                        <th>Order created on</th>
+                        <th>Synced on</th>
+                        <th width="200"></th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+        <div class="paging-nav">
+            <div class="block">Total <span class="total-item"></span> item(s)</div>
+            <div class="block page-list"></div>
+            <div class="block page-size">
+                <select class="form-control form-select" onchange="onChangePageSize()">
+                    <option value="5">5 items/page</option>
+                    <option value="10" selected>10 items/page</option>
+                    <option value="15">15 items/page</option>
+                    <option value="20">20 items/page</option>
+                </select>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts
+{
+    <script type="text/javascript">
+        var ctlDateFrom = undefined;
+        var ctlDateTo = undefined;
+        var ctlPageSize = undefined;
+        var ctlPaging = undefined;
+        var ctlResultTable = undefined;
+        var ctlStatus = undefined;
+        var iPageIndex = 1;
+        var iTotalPage = 0;
+
+        jQuery(document).ready(function () {
+            init();
+
+            ctlDateFrom = $('.nav-bar .from-date input');
+            ctlDateTo = $('.nav-bar .to-date input');
+            ctlPageSize = $('.page-size select');
+            ctlPaging = $('.page-list');
+            ctlResultTable = $('.result-list table');
+            ctlStatus = $('.nav-bar select');
+
+            onClickSearch(false);
+        });
+
+        function init() {
+            var val = new Date();
+
+            var ctlToDate = $('.nav-bar .to-date input');
+
+            ctlToDate.datepicker({ format: 'dd/mm/yyyy' });
+            ctlToDate.datepicker('setDate', val);
+
+            val.setDate(val.getDate() - 30);
+        
+            var ctlFromDate = $('.nav-bar .from-date input');
+
+            ctlFromDate.datepicker({ format: 'dd/mm/yyyy' });
+            ctlFromDate.datepicker('setDate', val);
+        }
+
+        function onChangePageSize() {
+            doSearch(true);
+        }
+
+        function onClickResync(id) {
+            doAjaxPost(
+                `${window.location.origin}/report/order/resync?id=${id}`,
+                (resp) => {
+                    if (!resp) {
+                        alert('Occured errors');
+                    }
+                    else {
+                        alert(resp.message);
+                    }
+                }
+            );
+        }
+
+        function onClickSearch(isPostback) {
+            doSearch(isPostback);
+        };
+
+        function doAjaxPost(api, callback, postData = undefined) {
+            var arg = {
+                url: api,
+                type: 'POST',
+                contentType: 'application/json;charset=utf-8'
+            };
+
+            if (postData) {
+                arg.dataType = 'json';
+                arg.data = JSON.stringify(postData);
+            }
+
+            jQuery
+                .ajax(arg)
+                .done(function(resp) {
+                    debugger
+                    if (callback) {
+                        callback(resp);
+                    }
+                }).always(function(jqXHR, textStatus) {
+                    debugger
+                    if (jqXHR.status === 401) {
+                        window.location.href = `${window.location.origin}/Identity/Account/Login?ReturnUrl=%2FReport`;
+                        return;
+                    }
+
+                    showWait(false);
+                });
+        }
+
+        function doSearch(isPostback) {
+            showWait(true);
+
+            var postData = {
+                requestPage: iPageIndex
+            };
+
+            postData.requestCount = parseInt(ctlPageSize.val());
+            postData.status = ctlStatus.val();
+            postData.fromDate = ctlDateFrom.val();
+            postData.toDate = ctlDateTo.val();
+
+            doAjaxPost(
+                `${window.location.origin}/report/order/search`,
+                (resp) => {
+                    if (!resp) {
+                        resp = {};
+                    }
+                    else if (resp.code !== 0) {
+                        alert(resp.message);
+                        return;
+                    }
+
+                    if (!resp.data) {
+                        resp.data = {
+                            total: 0,
+                            records: undefined
+                        };
+                    }
+
+                    if (!resp.data.records) {
+                        resp.data.records = [];
+                    }
+
+                    doBindResultList(postData, resp.data, isPostback);
+
+                    doPaging(isPostback);
+                },
+                postData
+            );
+        }
+
+        function doBindResultList(postData, respData, isPostback) {
+            var i = (iPageIndex - 1) * postData.requestCount;
+            
+            for (var m = 0, n = respData.records.length; m < n; m++) {
+                var x = respData.records[m];
+
+                x.index = ++i;
+
+                if (!x.orderCreatedOn) {
+                    x.orderCreatedOn = '-';
+                }
+                else {
+                    x.orderCreatedOn = new Date(x.orderCreatedOn).toLocaleString('en-GB');
+                }
+
+                if (!x.syncedOn) {
+                    x.syncedOn = '-';
+                }
+                else {
+                    x.syncedOn = new Date(x.syncedOn).toLocaleString('en-GB');
+                }
+            }
+
+            iTotalPage = parseInt(respData.total / postData.requestCount);
+            
+            if (respData.total % postData.requestCount !== 0) {
+                iTotalPage += 1;
+            }
+
+            $('.paging-nav .total-item').html(respData.total);
+
+            if (isPostback) {
+                ctlResultTable.data('dynatable').settings.dataset.records = respData.records;
+                ctlResultTable.data('dynatable').dom.update();
+            }
+            else {
+                ctlResultTable.dynatable(
+                    {
+                        dataset: {
+                            records: respData.records
+                        },
+                        features: {
+                            paginate: false,
+                            recordCount: false,
+                            search: false,
+                            sort: false
+                        },
+                        table: {
+                            bodyRowSelector: 'tbody tr'
+                        },
+                        writers: {
+                            _rowWriter: function (rowIndex, record, columns, cellWriter) {
+                                var str = '';
+
+                                // grab the record's attribute for each column
+                                var j = columns.length - 1;
+
+                                columns[0].id = 'index';
+                                columns[j - 1].id = 'syncedOn';
+                                columns[j - 2].id = 'orderCreatedOn';
+
+                                for (var i = 0; i < j; i++) {
+                                    if (i !== 3) {
+                                        str += cellWriter(columns[i], record);
+                                    }
+                                    else {
+                                        str += `<td><span class="order-status ${record.status.toLowerCase().replaceAll('_', '-')}"">${record.status}</span></td>`;
+                                    }
+                                }
+
+                                var str1;
+
+                                if (!record.canReSync) {
+                                    str1 = 'btn-secondary" disabled';
+                                }
+                                else {
+                                    str1 = `btn-resync" onclick="onClickResync(${record.id})"`;
+                                }
+
+                                str += `<td style="text-align: center;"><input type="button" value="ReSync" class="btn ${str1} /></td>`;
+
+                                return `<tr>${str}</tr>`;
+                            }
+                        }
+                    }
+                );
+            }
+        }
+
+        function doPaging(isPostback) {
+            var sources = function () {
+                var result = [];
+
+                for (var i = 1, j = iTotalPage + 1; i < j; i++) {
+                    result.push(i);
+                }
+
+                return result;
+            }();
+
+            if (isPostback) {
+                ctlPaging.pagination('destroy');
+            }
+
+            ctlPaging.pagination(
+                {
+                    dataSource: sources,
+                    pageNumber: iPageIndex,
+                    pageSize: 1,
+                    callback: function(data, pagination) {
+                        var dataHtml = '<ul>';
+
+                        $.each(data, function (index, item) {
+                          dataHtml += '<li>' + item + '</li>';
+                        });
+
+                        dataHtml += '</ul>';
+
+                        if (iPageIndex !== pagination.pageNumber) {
+                            debugger
+                            iPageIndex = pagination.pageNumber;
+
+                            doSearch(true);
+                        }
+                    }
+                }
+            );
+        }
+
+        function showWait(canShow = true) {
+            if (!canShow) {
+                $('.modal-loading').remove();
+            }
+            else {
+                $('<div class="modal-loading"><div class="spinner-wrapper"><div class="spinner-border" role="status">  <span class="sr-only"></span></div></div></div>')
+                .appendTo('body');
+            }
+
+        }
+    </script>
+}

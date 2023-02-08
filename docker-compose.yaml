@@ -1,0 +1,32 @@
+version: "3"
+services:
+  db:
+    image: mariadb:10.4
+    restart: always
+    ports:
+        - "3306:3306"
+    env_file:
+      - .env
+    environment:
+        MYSQL_DATABASE: ${DATABASE_NAME}
+        MYSQL_ROOT_PASSWORD: ${DATABASE_PASS}
+        MYSQL_USER: ${DATABASE_USER}
+        MYSQL_PASSWORD: ${DATABASE_PASS}
+
+  nginx:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.nginx
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+  
+  kps-integration-api-svc:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.backend
+    env_file:
+      - .env
+    ports:
+        - "8080:8080"

@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json.schemastore.org/launchsettings.json",
+  "iisSettings": {
+    "windowsAuthentication": false,
+    "anonymousAuthentication": true,
+    "iisExpress": {
+      "applicationUrl": "http://localhost:33476",
+      "sslPort": 44349
+    }
+  },
+  "profiles": {
+    "Kps.Integration.Api": {
+      "commandName": "Project",
+      "launchBrowser": false,
+      "launchUrl": "swagger",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://localhost:7150;http://localhost:5150",
+      "dotnetRunMessages": true
+    },
+    "IIS Express": {
+      "commandName": "IISExpress",
+      "launchBrowser": true,
+      "launchUrl": "swagger",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    },
+    "SyncOrderFromMagentoToCRMFlow": {
+      "commandName": "Project",
+      "commandLineArgs": "SyncOrderFromMagentoToCRMFlow",
+      "launchBrowser": true,
+      "launchUrl": "swagger",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://localhost:7150;http://localhost:5150",
+      "dotnetRunMessages": true
+    },
+    "SyncInventoryToMagento": {
+      "commandName": "Project",
+      "commandLineArgs": "SyncInventoryToMagento",
+      "launchBrowser": true,
+      "launchUrl": "swagger",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://localhost:7150;http://localhost:5150",
+      "dotnetRunMessages": true
+    },
+    "SyncOrderFromMagentoToWMSFlow": {
+      "commandName": "Project",
+      "commandLineArgs": "SyncOrderFromMagentoToWMSFlow",
+      "launchBrowser": false,
+      "launchUrl": "swagger",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://localhost:7150;http://localhost:5150",
+      "dotnetRunMessages": true
+    }
+  }
+}
