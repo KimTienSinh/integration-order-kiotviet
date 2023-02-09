@@ -77,6 +77,7 @@ namespace Kps.Integration.Api.Controllers
 
 
         [HttpGet("GetListOrderKiotviet")]
+        [ApiExplorerSettings(IgnoreApi = true)]
         public async Task<List<KpsOrderKiotviet>> GetListOrderKiotviet()
         {
             try
@@ -126,7 +127,7 @@ namespace Kps.Integration.Api.Controllers
 
 
         [HttpPost("SyncListOrderPost")]
-        [ApiExplorerSettings(IgnoreApi = false)]
+        [ApiExplorerSettings(IgnoreApi = true)]
         public async Task<ActionResult> SyncListOrderPost([FromBody] List<KpsOrderKiotviet> listOrder)
         {
             listOrder = await GetListOrderKiotviet();
@@ -138,6 +139,7 @@ namespace Kps.Integration.Api.Controllers
 
 
         [HttpGet("SyncListOrderHttp")]
+        [ApiExplorerSettings(IgnoreApi = true)]
         public async void SyncListOrderHttp()
         {
             try
