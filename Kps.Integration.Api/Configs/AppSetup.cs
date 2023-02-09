@@ -31,7 +31,7 @@ public static class AppSetup
         services.AddScoped<ICrmOrderFlow, CrmOrderFlow>();
         services.AddScoped<IWmsReportService, WmsReportService>();
         services.AddScoped<IWmsWebHooksService, WmsWebHooksService>();
-
+        
         return services;
     }
 }

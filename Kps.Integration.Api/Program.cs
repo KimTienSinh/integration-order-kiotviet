@@ -10,7 +10,7 @@ using Serilog;
 using Serilog.Events;
 using Kps.Integration.Api.Data;
 using Kps.Integration.Api.HostedServices;
-
+using Kps.Integration.Api.Controllers;
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
     .MinimumLevel.Override("System", LogEventLevel.Warning)
@@ -18,9 +18,12 @@ Log.Logger = new LoggerConfiguration()
     .WriteTo.Console()
     .CreateBootstrapLogger();
 
+
+
 try
 {
-    var builder = WebApplication.CreateBuilder(args);
+    
+var builder = WebApplication.CreateBuilder(args);
 
     builder.Host.UseSerilog((context, services, configuration) => configuration
         .ReadFrom.Configuration(context.Configuration)
@@ -30,6 +33,7 @@ try
     // Add services to the container.
     builder.Services.AddControllers();
 
+    builder.Services.AddHostedService<OrderKiotVietServices>();
     builder.Services.AddRazorPages();
 
     // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -55,9 +59,8 @@ try
             options.UseMySql(builder.Configuration.GetConnectionString("IntegrationDB"),
             Microsoft.EntityFrameworkCore.ServerVersion.Parse("8.0.23-mysql"));
         });
-
+    
     builder.Services.UseAuth();
-    //builder.Services.AddHostedService<OrderKiotVietServices>();
     var app = builder.Build();
 
     // Configure the HTTP request pipeline.

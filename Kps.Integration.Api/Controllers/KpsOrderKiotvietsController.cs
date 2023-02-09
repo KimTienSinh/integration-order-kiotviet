@@ -14,6 +14,8 @@ using ConfigurationManager = Kps.Integration.Api.Models.OrdersKiotViet.Configura
 using Newtonsoft.Json.Linq;
 using System.Net.Http.Headers;
 using System.Numerics;
+using Kps.Integration.Api.HostedServices;
+using System.Net.Http;
 
 namespace Kps.Integration.Api.Controllers
 {
@@ -22,11 +24,13 @@ namespace Kps.Integration.Api.Controllers
     public class KpsOrderKiotvietsController : ControllerBase
     {
         private readonly integrationproddbContext _context;
-
-        public KpsOrderKiotvietsController(integrationproddbContext context)
+        private readonly ILogger<OrderKiotVietServices> _logger;
+        public KpsOrderKiotvietsController(integrationproddbContext context, ILogger<OrderKiotVietServices> logger)
         {
             _context = context;
+            _logger = logger;
         }
+
 
         [HttpGet("GetKpsOrderKiotvietsDB")]
         public async Task<ActionResult<IEnumerable<KpsOrderKiotviet>>> GetKpsOrderKiotvietsDB()
@@ -34,7 +38,7 @@ namespace Kps.Integration.Api.Controllers
             return await _context.KpsOrderKiotviets.ToListAsync();
         }
 
-        
+
         private bool KpsOrderKiotvietExists(uint id)
         {
             return _context.KpsOrderKiotviets.Any(e => e.IdKps == id);
@@ -132,16 +136,36 @@ namespace Kps.Integration.Api.Controllers
             return CreatedAtAction("SyncListOrderPost", new { }, listOrder);
         }
 
-/*
-        [HttpGet("SyncListOrderHosted")]
-        public async Task<ActionResult> SyncListOrderHosted()
+
+        [HttpGet("SyncListOrderHttp")]
+        public async void SyncListOrderHttp()
         {
-          //  var syncOrderHosted = await SyncListOrderPost();
-            var orderIdMax = _context.KpsOrderKiotviets
-                .Max(o => o.Id);
+            try
+            {
+                var configManager = new ConfigurationManager();
+                var endPointPost = configManager.GetConfigValue<string>("ApiKiotViet:urlOrderPost");
+                var endPointGet = configManager.GetConfigValue<string>("ApiKiotViet:urlOrderGet");
+                using (var httpClient = new HttpClient())
+                {
+                    var getData = await httpClient.GetAsync(endPointGet);
+                    var jsonResult = await getData.Content.ReadAsStringAsync();
+                    var orderList = JsonConvert.DeserializeObject<List<KpsOrderKiotviet>>(jsonResult);
+                    var response = await httpClient.PostAsJsonAsync(endPointPost, orderList);
+                    if (jsonResult != "[]")
+                    {
+                        _logger.LogInformation($"call api successfully " +
+                                           $"Data sync: {jsonResult}");
+                    }
+                    response.EnsureSuccessStatusCode();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error SyncListOrderHttp method");
+                throw;
+            }
 
-            return Ok(orderIdMax);
+        }
 
-        }*/
     }
 }

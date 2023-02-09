@@ -7,41 +7,53 @@ namespace Kps.Integration.Api.HostedServices
 {
     public class OrderKiotVietServices : IHostedService
     {
-        KpsOrderKiotvietsController _controller;
+        private readonly KpsOrderKiotvietsController _controller;
 
-        
-
+        private readonly ILogger<OrderKiotVietServices> _logger;
+        public OrderKiotVietServices(ILogger<OrderKiotVietServices> logger)
+        {
+            _logger = logger;
+        }
         public Task StartAsync(CancellationToken cancellationToken)
         {
-            Task.Run(async () =>
+            try
             {
-                while (!cancellationToken.IsCancellationRequested)
+                Task.Run(async () =>
                 {
-                  // await _controller.SyncListOrderPost();
-                    await Task.Delay(new TimeSpan(0, 5, 0));
-                }
-            });
-            return Task.CompletedTask;
-        }
-        /*private async void OnTimedEvent(Object source, ElapsedEventArgs e)
-        {
-            var configManager = new ConfigurationManager();
-            var endPoint = configManager.GetConfigValue<string>("KiotViet:urlToken");
-            using (var httpClient = new HttpClient())
+                    while (!cancellationToken.IsCancellationRequested)
+                    {
+                         OnTimedEvent();
+                        _logger.LogInformation("Task completed successfully");
+                        await Task.Delay(new TimeSpan(0, 2, 0));
+                    }
+                });
+                return Task.CompletedTask;
+            }
+            catch (Exception ex)
             {
-                var order = GetListOrderKiotviet();
-                var response = await httpClient.PostAsJsonAsync("https://example.com/api/Orders", order);
-                response.EnsureSuccessStatusCode();
+                _logger.LogError(ex, "Error schedule task!!!");
+                throw;
             }
         }
-
-        public Task<List<KpsOrderKiotviet>> GetListOrderKiotviet()
+        public async void OnTimedEvent()
         {
-            var listOrder = _controller.GetListOrderKiotviet();
-            return listOrder;
-        }*/
+            try
+            {
+                var configManager = new ConfigurationManager();
 
-        //https://localhost:7150/api/KpsOrderKiotviets/SyncListOrderPost
+                var endPointGet = configManager.GetConfigValue<string>("ApiKiotViet:urlOrderHttp");
+                using (var httpClient = new HttpClient())
+                {
+                    var response = await httpClient.GetAsync(endPointGet);
+                    response.EnsureSuccessStatusCode();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error call api!!!");
+                throw;
+            }
+        }
 
         public Task StopAsync(CancellationToken cancellationToken)
         {
